@@ -2,133 +2,168 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fitness Pro Tracker</title>
+<title>Progress</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-body { font-family:-apple-system; background:#0f0f0f; color:white; text-align:center; padding:20px;}
-button { padding:12px; margin:8px; border-radius:10px; border:none; font-size:15px;}
-.train { background:#22c55e; color:white;}
-.card { background:#1c1c1e; padding:15px; border-radius:15px; margin-top:15px;}
-.calendar { display:grid; grid-template-columns: repeat(7,1fr); gap:5px; margin-top:10px;}
-.day { padding:10px; background:#2c2c2e; border-radius:8px; font-size:12px;}
-.trained { background:#22c55e;}
-img { max-width:100%; border-radius:10px; margin-top:10px;}
-canvas { background:white; border-radius:10px; margin-top:10px;}
+body{
+font-family:-apple-system;
+background:#000;
+color:white;
+text-align:center;
+padding:20px;
+}
+.card{
+background:#111;
+padding:20px;
+border-radius:20px;
+margin-top:20px;
+}
+.calendar{
+display:grid;
+grid-template-columns:repeat(7,1fr);
+gap:6px;
+margin-top:15px;
+}
+.day{
+padding:12px;
+background:#1c1c1e;
+border-radius:12px;
+font-size:14px;
+}
+.trained{
+background:white;
+color:black;
+}
+button{
+background:white;
+color:black;
+padding:14px;
+border:none;
+border-radius:14px;
+font-size:16px;
+width:100%;
+margin-top:10px;
+}
+input{
+padding:12px;
+border-radius:12px;
+border:none;
+width:90%;
+margin-top:10px;
+text-align:center;
+}
+img{
+max-width:100%;
+border-radius:16px;
+margin-top:15px;
+}
+canvas{
+background:white;
+border-radius:16px;
+margin-top:20px;
+}
+.small{
+opacity:0.6;
+font-size:14px;
+}
 </style>
 </head>
 <body>
 
-<h1>💪 Fitness Pro</h1>
-<div class="card"><h3 id="quote"></h3></div>
-
-<div class="card">
-<h3>🔥 Streak: <span id="streak">0</span></h3>
-<button class="train" onclick="train()">Vandaag getraind</button>
-<p id="message"></p>
-</div>
+<h1>Progress</h1>
 
 <div class="card">
 <h3>📅 Deze maand</h3>
+<div id="count"></div>
 <div class="calendar" id="calendar"></div>
 </div>
 
 <div class="card">
-<h3>📸 Wekelijkse Progress</h3>
-<input type="file" accept="image/*" onchange="savePhoto(event)">
-<div id="photos"></div>
+<h3>⚖️ Gewicht</h3>
+<input type="number" id="weightInput" placeholder="kg">
+<button onclick="saveWeight()">Opslaan</button>
 </div>
 
 <div class="card">
-<h3>📊 Trainingsgrafiek</h3>
+<h3>📸 Week foto</h3>
+<input type="file" accept="image/*" onchange="savePhoto(event)">
+<div id="photoContainer"></div>
+</div>
+
+<div class="card">
+<h3>📊 Gewicht Progress</h3>
 <canvas id="chart"></canvas>
 </div>
 
 <script>
-const quotes=[
-"Discipline > Motivation",
-"You vs You",
-"Earn your body",
-"No days off mindset",
-"Small progress is still progress",
-"Consistency builds champions"
-];
-document.getElementById("quote").innerText=
-quotes[Math.floor(Math.random()*quotes.length)];
-
-let streak=parseInt(localStorage.getItem("streak"))||0;
-let lastDate=localStorage.getItem("lastDate");
 let trainingDays=JSON.parse(localStorage.getItem("trainingDays"))||[];
-document.getElementById("streak").innerText=streak;
-
-function train(){
-let today=new Date().toDateString();
-if(lastDate===today){
-document.getElementById("message").innerText="Vandaag al getraind 💪";
-return;
-}
-let yesterday=new Date();
-yesterday.setDate(yesterday.getDate()-1);
-if(lastDate!==yesterday.toDateString()){ streak=0; }
-streak++;
-lastDate=today;
-trainingDays.push(today);
-localStorage.setItem("streak",streak);
-localStorage.setItem("lastDate",today);
-localStorage.setItem("trainingDays",JSON.stringify(trainingDays));
-document.getElementById("streak").innerText=streak;
-renderCalendar();
-updateChart();
-}
 
 function renderCalendar(){
 const cal=document.getElementById("calendar");
 cal.innerHTML="";
-for(let i=1;i<=31;i++){
-let d=new Date(new Date().getFullYear(),new Date().getMonth(),i).toDateString();
+let today=new Date();
+let year=today.getFullYear();
+let month=today.getMonth();
+let daysInMonth=new Date(year,month+1,0).getDate();
+
+for(let i=1;i<=daysInMonth;i++){
+let date=new Date(year,month,i).toDateString();
 let div=document.createElement("div");
 div.className="day";
-if(trainingDays.includes(d)){div.classList.add("trained");}
+if(trainingDays.includes(date)){div.classList.add("trained");}
 div.innerText=i;
+div.onclick=function(){
+if(trainingDays.includes(date)){
+trainingDays=trainingDays.filter(d=>d!==date);
+}else{
+trainingDays.push(date);
+}
+localStorage.setItem("trainingDays",JSON.stringify(trainingDays));
+renderCalendar();
+};
 cal.appendChild(div);
 }
+document.getElementById("count").innerText=
+trainingDays.length+" trainingen deze maand";
 }
 renderCalendar();
+
+function saveWeight(){
+let w=document.getElementById("weightInput").value;
+if(!w)return;
+let data=JSON.parse(localStorage.getItem("weights"))||[];
+data.push({date:new Date().toLocaleDateString(),weight:w});
+localStorage.setItem("weights",JSON.stringify(data));
+document.getElementById("weightInput").value="";
+updateChart();
+}
 
 function savePhoto(event){
 const file=event.target.files[0];
 const reader=new FileReader();
 reader.onload=function(){
-let photos=JSON.parse(localStorage.getItem("photos"))||[];
-photos.push({date:new Date().toDateString(),img:reader.result});
-localStorage.setItem("photos",JSON.stringify(photos));
-displayPhotos();
+localStorage.setItem("weekPhoto",reader.result);
+displayPhoto();
 }
 reader.readAsDataURL(file);
 }
 
-function displayPhotos(){
-let photos=JSON.parse(localStorage.getItem("photos"))||[];
-let container=document.getElementById("photos");
-container.innerHTML="";
-photos.slice(-4).forEach(p=>{
-container.innerHTML+=`<p>${p.date}</p><img src="${p.img}">`;
-});
+function displayPhoto(){
+const photo=localStorage.getItem("weekPhoto");
+if(photo){
+document.getElementById("photoContainer").innerHTML=
+'<img src="'+photo+'">';
 }
-displayPhotos();
+}
+displayPhoto();
 
 function updateChart(){
-let days=JSON.parse(localStorage.getItem("trainingDays"))||[];
-let counts={};
-days.forEach(d=>{
-let date=new Date(d);
-let week=date.getWeek?.()||Math.ceil(date.getDate()/7);
-counts[week]=(counts[week]||0)+1;
-});
-let labels=Object.keys(counts);
-let data=Object.values(counts);
+let data=JSON.parse(localStorage.getItem("weights"))||[];
+let labels=data.map(d=>d.date);
+let weights=data.map(d=>d.weight);
 new Chart(document.getElementById("chart"),{
-type:"bar",
-data:{labels:labels,datasets:[{label:"Trainingen per week",data:data}]},
+type:"line",
+data:{labels:labels,datasets:[{label:"Gewicht",data:weights}]},
 options:{responsive:true}
 });
 }
