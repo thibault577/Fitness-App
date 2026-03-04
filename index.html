@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fitness Progress</title>
+<style>
+body {
+    font-family: -apple-system;
+    background: #111;
+    color: white;
+    text-align: center;
+    padding: 20px;
+}
+button {
+    padding: 15px;
+    margin: 10px;
+    border-radius: 12px;
+    border: none;
+    font-size: 16px;
+}
+.train { background: #28a745; color: white; }
+.reset { background: #dc3545; color: white; }
+.card {
+    background: #1c1c1e;
+    padding: 15px;
+    border-radius: 15px;
+    margin-top: 15px;
+}
+img {
+    max-width: 100%;
+    border-radius: 12px;
+    margin-top: 10px;
+}
+</style>
+</head>
+<body>
+
+<h1>💪 Fitness Tracker</h1>
+
+<div class="card">
+    <h2 id="quote"></h2>
+</div>
+
+<div class="card">
+    <h3>🔥 Streak: <span id="streak">0</span> dagen</h3>
+    <button class="train" onclick="train()">Vandaag getraind</button>
+    <button class="reset" onclick="resetStreak()">Reset</button>
+</div>
+
+<div class="card">
+    <h3>📸 Wekelijkse Progress Foto</h3>
+    <input type="file" accept="image/*" onchange="savePhoto(event)">
+    <div id="photoContainer"></div>
+</div>
+
+<script>
+const quotes = [
+"Discipline beats motivation.",
+"No excuses. Just results.",
+"Train insane or remain the same.",
+"Consistency is king.",
+"You vs You.",
+"Pain is temporary. Pride is forever.",
+"Earn it."
+];
+
+document.getElementById("quote").innerText =
+quotes[Math.floor(Math.random()*quotes.length)];
+
+let streak = localStorage.getItem("streak") || 0;
+document.getElementById("streak").innerText = streak;
+
+function train() {
+    streak++;
+    localStorage.setItem("streak", streak);
+    document.getElementById("streak").innerText = streak;
+}
+
+function resetStreak() {
+    streak = 0;
+    localStorage.setItem("streak", streak);
+    document.getElementById("streak").innerText = streak;
+}
+
+function savePhoto(event) {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function() {
+        localStorage.setItem("progressPhoto", reader.result);
+        displayPhoto();
+    }
+    reader.readAsDataURL(file);
+}
+
+function displayPhoto() {
+    const photo = localStorage.getItem("progressPhoto");
+    if(photo){
+        document.getElementById("photoContainer").innerHTML =
+        '<img src="'+photo+'">';
+    }
+}
+
+displayPhoto();
+</script>
+
+</body>
+</html>
